@@ -1,0 +1,527 @@
+<title>Battery Scenario Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout concept: controls rail on the left, results on the right; the rail collapses above the results on phones.
+   Color: ink on a warm-neutral plane; series colors belong to chemistries only, never to UI chrome. */
+:root{
+  --bg:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --chip:#efeee9; --chip-hover:#e6e5de;
+  --good:#006300; --bad:#c02f2f;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6;
+  --font:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --chip:#262624; --chip-hover:#30302d;
+    --good:#0ca30c; --bad:#e66767;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#0ca30c; --s7:#9085e9;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --chip:#262624; --chip-hover:#30302d;
+  --good:#0ca30c; --bad:#e66767;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#0ca30c; --s7:#9085e9;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);
+  padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1320px;margin:0 auto}
+h1{font-size:22px;line-height:1.2;margin:0 0 4px;font-weight:650;letter-spacing:-.01em;text-wrap:balance}
+.sub{margin:0 0 18px;color:var(--ink2);max-width:70ch}
+.layout{display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0}
+@media (min-width:921px){.panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}}
+.panel>summary{list-style:none;cursor:pointer;padding:12px 14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.panel>summary::-webkit-details-marker{display:none}
+.panel>summary::after{content:"Hide";font-weight:400;color:var(--ink2);font-size:12px}
+.panel:not([open])>summary::after{content:"Show"}
+.panel-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:16px}
+.grp h3{margin:0 0 6px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;color:var(--ink);background:var(--chip);border:1px solid transparent;border-radius:999px;padding:5px 11px;cursor:pointer}
+.chip:hover{background:var(--chip-hover)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.chip:focus-visible,input:focus-visible,summary:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;background:transparent;color:var(--ink);border:0;padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:baseline}
+.row label{font-size:13px}
+.row output{font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.row input[type=range]{grid-column:1 / -1;width:100%;margin:2px 0 0;accent-color:var(--ink)}
+.tag{font-style:normal;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--bad);border:1px solid currentColor;border-radius:4px;padding:0 4px;margin-left:4px}
+.tag.ok{color:var(--ink2)}
+.stack{display:flex;flex-direction:column;gap:8px}
+.chem-list{display:flex;flex-direction:column;gap:2px}
+.chem-list label{display:flex;gap:8px;align-items:center;font-size:13px;padding:3px 0}
+.sw{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none}
+details.sub-d>summary{cursor:pointer;font-size:13px;color:var(--ink2)}
+.fine{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px}
+.fine .c{border-top:1px solid var(--grid);padding-top:8px}
+.fine .c b{font-weight:600;font-size:13px;display:flex;gap:6px;align-items:center}
+.btn{font:inherit;font-size:13px;border:1px solid var(--border);background:transparent;color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{background:var(--chip)}
+.content{display:flex;flex-direction:column;gap:16px;min-width:0}
+.headline{font-size:17px;line-height:1.4;margin:0;max-width:75ch;text-wrap:pretty}
+.headline small{display:block;font-size:13px;color:var(--ink2);margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-width:0}
+.card h2{font-size:15px;margin:0 0 2px;font-weight:600}
+.card p.d{margin:0 0 10px;color:var(--ink2);font-size:13px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:1180px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0 0 6px;font-size:12px;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+svg{display:block;max-width:100%;overflow:visible}
+svg text{font:12px var(--font);fill:var(--ink2)}
+svg text.lab{fill:var(--ink)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--grid);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--ink2);font-size:12px}
+td .sw{margin-right:6px;vertical-align:-1px}
+.up{color:var(--good)} .down{color:var(--bad)}
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12px;line-height:1.4;padding:7px 9px;border-radius:7px;max-width:260px;opacity:0;transition:opacity .08s}
+#tip b{font-weight:600}
+#tip .sw{margin-right:5px}
+.notes{font-size:13px;color:var(--ink2);display:flex;flex-direction:column;gap:8px}
+.notes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.notes a{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){#tip{transition:none}}
+</style>
+
+<div class="wrap">
+  <h1>Battery Scenario Lab</h1>
+  <p class="sub">Next-generation battery chemistries, 2026 to 2035. Change the market, the policy and what you care about, and watch the ranking move. Each result is the share of 3,000 simulated outcomes.</p>
+  <div class="layout">
+    <details class="panel" id="panel" open>
+      <summary>Scenario controls</summary>
+      <div class="panel-body" id="controls"></div>
+    </details>
+    <div class="content" id="content">
+      <p class="headline" id="headline"></p>
+      <section class="card">
+        <h2>Who comes out on top</h2>
+        <p class="d">Share of simulated outcomes where each chemistry ranks first. The lighter mark is the share where it ranks in the top three.</p>
+        <div id="c-rank"></div>
+      </section>
+      <div class="grid2">
+        <section class="card">
+          <h2 id="cost-title">Pack cost, 2026 to 2035</h2>
+          <p class="d" id="cost-desc"></p>
+          <div class="legend" id="lg-cost"></div>
+          <div id="c-cost"></div>
+        </section>
+        <section class="card">
+          <h2>Energy density against 2035 cost</h2>
+          <p class="d">Dots are medians; the vertical bar spans the 10th to 90th percentile of 2035 pack cost.</p>
+          <div class="legend" id="lg-sc"></div>
+          <div id="c-sc"></div>
+        </section>
+      </div>
+      <section class="card">
+        <h2>Cost of energy delivered over the pack's life</h2>
+        <p class="d">2035 pack cost divided by lifetime throughput (cycles, depth of discharge, round-trip efficiency), in cents per kWh delivered. This is what matters for grid storage.</p>
+        <div id="c-lcos"></div>
+      </section>
+      <section class="card">
+        <h2>Scenario table</h2>
+        <p class="d">Every number behind the charts. “Change” compares the first-place share with the baseline levers under the same weights and region.</p>
+        <div class="tbl" id="tbl"></div>
+        <details class="sub-d" style="margin-top:12px"><summary>Pack cost by year ($/kWh)</summary><div class="tbl" id="tbl-years" style="margin-top:8px"></div></details>
+      </section>
+      <section class="card notes">
+        <h2>Where the numbers come from</h2>
+        <ul>
+          <li>Pack cost for LFP and silicon-anode NMC follows Argonne BatPaC (2023 dollars). Other cost ranges come from DOE Vehicle Technologies Office roadmaps and Argonne and PNNL sodium-ion work.</li>
+          <li>Energy density and cycle life for sodium-ion, LMFP and solid-state use manufacturer claims (CATL, BYD, QuantumScape) and DOE targets. Claims are upper bounds, so use the per-chemistry sliders to haircut them.</li>
+          <li>India inputs: PLI-ACC (₹18,100 crore, 50 GWh, 60% domestic value addition), the ₹2,000/kWh subsidy cap, and a 20 to 30% cost premium for India-made batteries (IEEFA).</li>
+          <li>Assumed, not sourced: safety scores, LFP, NMC and LMFP cycle life, solid-state and Li-S 2026 cost, lithium exposure of pack cost, freight, exchange rate, and when each chemistry localises in India.</li>
+          <li>Unverified: customs duty on imported cells and the GST rate (tagged in the controls). Check CBIC and GST Council notices before relying on them.</li>
+        </ul>
+        <div>Sources:
+          <a target="_blank" rel="noopener" href="https://publications.anl.gov/anlpubs/2024/01/187177.pdf">Argonne BatPaC</a> ·
+          <a target="_blank" rel="noopener" href="https://www.energy.gov/node/4523480">DOE VTO roadmap</a> ·
+          <a target="_blank" rel="noopener" href="https://iea.org/reports/global-ev-outlook-2026/electric-vehicle-batteries">IEA Global EV Outlook 2026</a> ·
+          <a target="_blank" rel="noopener" href="https://www.pnnl.gov/main/publications/external/technical_reports/PNNL-33878-3.pdf">PNNL sodium-ion</a> ·
+          <a target="_blank" rel="noopener" href="https://pib.gov.in/PressReleasePage.aspx?PRID=2224552">PIB, PLI-ACC</a> ·
+          <a target="_blank" rel="noopener" href="https://ieefa.org/sites/default/files/2026-01/Assessing%20India%27s%20ACC%20PLI%20scheme.pdf">IEEFA on PLI</a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script id="model">
+var MODEL=(function(){
+'use strict';
+var YEARS=[2026,2027,2028,2029,2030,2031,2032,2033,2034,2035];
+var DOD=0.9,RTE=0.92,N=3000;
+// wh: cell Wh/kg; c26,c35: pack $/kWh; cyc: cycles; li: share of pack cost exposed to lithium price [ASSUMED]
+var CH=[
+ {name:'NMC (graphite)',short:'NMC',wh:[220,250,280],c26:[115,125,140],c35:[80,95,120],cyc:[1000,1500,2000],trl:9,safety:.60,risk:.65,from:2026,li:.12},
+ {name:'LFP',short:'LFP',wh:[160,175,190],c26:[98,102,110],c35:[72,78,90],cyc:[3000,4500,6000],trl:9,safety:.85,risk:.45,from:2026,li:.12,anch:{2026:102.18,2030:86.64,2035:78.27}},
+ {name:'LMFP',short:'LMFP',wh:[160,190,210],c26:[95,108,125],c35:[65,78,95],cyc:[2000,3000,4500],trl:7,safety:.82,risk:.45,from:2029,li:.12},
+ {name:'Si-anode / HV-NMC',short:'Si-anode NMC',wh:[280,320,350],c26:[110,116,130],c35:[72,78,95],cyc:[500,900,1300],trl:7,safety:.58,risk:.65,from:2031,li:.12,anch:{2026:116.28,2030:100.04,2035:78.36}},
+ {name:'Na-ion',short:'Na-ion',wh:[130,160,175],c26:[75,95,120],c35:[40,60,90],cyc:[2000,4000,10000],trl:7,safety:.85,risk:.20,from:2029,li:0},
+ {name:'Solid-state (Li-metal/NMC)',short:'Solid-state',wh:[300,380,450],c26:[300,400,600],c35:[70,118,180],cyc:[300,700,1100],trl:5,safety:.80,risk:.70,from:2036,li:.10},
+ {name:'Li-S',short:'Li-S',wh:[300,400,500],c26:[300,450,700],c35:[50,100,200],cyc:[100,300,800],trl:4,safety:.55,risk:.35,from:2036,li:.08}
+];
+var INDIA_DEF={fx:88,freight:.04,bcd:.05,gst:.18,prem26:.25,prem35:.08,dsMax:.6,dvaYear:2031,pliCapPct:.2,pliCapInr:2000,pliEnd:2032,pliFrac:.5,delay:0};
+var WEIGHTS={
+ 'Long-range EV':{energy:30,cost:20,life:10,safety:15,supply:10,maturity:15},
+ 'Grid storage':{energy:2,cost:30,life:28,safety:20,supply:10,maturity:10},
+ 'Low-cost mobility':{energy:10,cost:35,life:15,safety:20,supply:10,maturity:10},
+ 'Safety first':{energy:5,cost:20,life:15,safety:40,supply:10,maturity:10}
+};
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+var U=(function(){var r=rng(7),u=[],c,v,i,a;for(c=0;c<CH.length;c++){u.push([]);for(v=0;v<4;v++){a=new Float32Array(N);for(i=0;i<N;i++)a[i]=r();u[c].push(a);}}return u;})();
+function tri(u,t){var a=t[0],m=t[1],b=t[2];if(b<=a)return a;var f=(m-a)/(b-a);return u<f?a+Math.sqrt(u*(b-a)*(m-a)):b-Math.sqrt((1-u)*(b-a)*(b-m));}
+function basePath(p,y){
+  if(p.anch){var ks=Object.keys(p.anch).map(Number).sort(function(a,b){return a-b;}),k;
+    for(k=0;k<ks.length-1;k++){if(y<=ks[k+1]){var f=(y-ks[k])/(ks[k+1]-ks[k]);return Math.exp(Math.log(p.anch[ks[k]])*(1-f)+Math.log(p.anch[ks[k+1]])*f);}}
+    return p.anch[ks[ks.length-1]];}
+  return p.c26[1]*Math.pow(p.c35[1]/p.c26[1],(y-2026)/9);
+}
+function indiaCost(p,g,y,I){
+  var t=Math.min(Math.max((y-2026)/(I.dvaYear-2026),0),1);
+  var from=p.from+(p.trl<9?I.delay:0);
+  var ds=y>=from?t*I.dsMax:0;
+  var prem=I.prem26+(I.prem35-I.prem26)*(y-2026)/9;
+  var imp=g*(1+I.freight+I.bcd),dom=g*(1+prem);
+  var cap=I.pliCapInr/I.fx*I.pliFrac;
+  var sub=y<=I.pliEnd?Math.min(cap,I.pliCapPct*dom):0;
+  return {cost:(1-ds)*imp+ds*(dom-sub),ds:ds};
+}
+function q(arr,p){var a=Float32Array.from(arr).sort();return a[Math.floor(p*(a.length-1))];}
+function compute(S){
+  var idx=[],c,j,i,k;
+  for(c=0;c<CH.length;c++){if(S.on[CH[c].name])idx.push(c);}
+  var n=idx.length,W=S.w,ws=0,key;
+  for(key in W)ws+=W[key];
+  var w={};for(key in W)w[key]=W[key]/(ws||1);
+  var per=idx.map(function(c){
+    var p=CH[c],m=S.mult[p.name],liF=1+p.li*S.shock/100,cm=m.cost*liF,g=[],ind=[],ds=[];
+    YEARS.forEach(function(y){var gy=basePath(p,y)*cm*Math.pow(S.prog,(y-2026)/9);g.push(gy);var r=indiaCost(p,gy,y,S.I);ind.push(r.cost);ds.push(r.ds);});
+    var rs=0,rc=0;YEARS.forEach(function(y,kk){if(y>=2030){rs+=ind[kk]/g[kk];rc++;}});
+    return {c:c,p:p,name:p.name,short:p.short,g:g,ind:ind,ds:ds,ratio:rs/rc,cm:cm,cyM:m.cyc};
+  });
+  var wh=[],cost=[],cyc=[],lc=[];
+  per.forEach(function(qq){
+    var u=U[qq.c],p=qq.p,a=new Float32Array(N),b=new Float32Array(N),d=new Float32Array(N),e=new Float32Array(N);
+    var k35=qq.cm*S.prog*(S.region==='India'?qq.ratio:1);
+    for(i=0;i<N;i++){a[i]=tri(u[0][i],p.wh);b[i]=tri(u[2][i],p.c35)*k35;d[i]=tri(u[3][i],p.cyc)*qq.cyM;e[i]=b[i]/(d[i]*DOD*RTE);}
+    wh.push(a);cost.push(b);cyc.push(d);lc.push(e);
+  });
+  var sc=per.map(function(){return new Float32Array(N);});
+  var r1=new Float64Array(n),r3=new Float64Array(n),rh=per.map(function(){return new Float64Array(n+1);});
+  var tmp=new Float64Array(n);
+  for(i=0;i<N;i++){
+    var wmin=1e9,wmax=-1e9,cmin=1e9,cmax=-1e9,lmin=1e9,lmax=-1e9;
+    for(j=0;j<n;j++){
+      if(wh[j][i]<wmin)wmin=wh[j][i];if(wh[j][i]>wmax)wmax=wh[j][i];
+      if(cost[j][i]<cmin)cmin=cost[j][i];if(cost[j][i]>cmax)cmax=cost[j][i];
+      if(lc[j][i]<lmin)lmin=lc[j][i];if(lc[j][i]>lmax)lmax=lc[j][i];
+    }
+    for(j=0;j<n;j++){
+      var p2=per[j].p;
+      var s=w.energy*(wh[j][i]-wmin)/(wmax-wmin+1e-12)+w.cost*(1-(cost[j][i]-cmin)/(cmax-cmin+1e-12))+w.life*(1-(lc[j][i]-lmin)/(lmax-lmin+1e-12))+w.safety*p2.safety+w.supply*(1-p2.risk)+w.maturity*(p2.trl/9);
+      sc[j][i]=s;tmp[j]=s;
+    }
+    for(j=0;j<n;j++){var rk=1;for(k=0;k<n;k++){if(tmp[k]>tmp[j])rk++;}rh[j][rk]++;if(rk===1)r1[j]++;if(rk<=3)r3[j]++;}
+  }
+  var out=per.map(function(qq,j){
+    var mean=0;for(i=0;i<N;i++)mean+=sc[j][i];mean/=N;
+    var cum=0,med=n;for(k=1;k<=n;k++){cum+=rh[j][k];if(cum>=N/2){med=k;break;}}
+    return {c:qq.c,name:qq.name,short:qq.short,trl:qq.p.trl,p1:r1[j]/N,p3:r3[j]/N,medRank:med,
+      score:{mean:mean,p10:q(sc[j],.1),p50:q(sc[j],.5),p90:q(sc[j],.9)},
+      wh:q(wh[j],.5),cost:{p10:q(cost[j],.1),p50:q(cost[j],.5),p90:q(cost[j],.9)},
+      cyc:q(cyc[j],.5),lcos:q(lc[j],.5)*100,g:qq.g,ind:qq.ind,ds:qq.ds,ratio:qq.ratio,
+      path:S.region==='India'?qq.ind.map(function(v){return v*(S.gst?1+S.I.gst:1);}):qq.g};
+  });
+  out.sort(function(a,b){return b.p1-a.p1||b.score.mean-a.score.mean;});
+  return {rows:out,N:N,years:YEARS};
+}
+return {YEARS:YEARS,CH:CH,compute:compute,INDIA_DEF:INDIA_DEF,WEIGHTS:WEIGHTS,N:N};
+})();
+</script>
+
+<script>
+(function(){
+var M=MODEL,CH=M.CH,YEARS=M.YEARS;
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function col(c){return 'var(--s'+(c+1)+')';}
+function fresh(){
+  var s={uc:'Long-range EV',w:clone(M.WEIGHTS['Long-range EV']),region:'Global',shock:0,prog:1,gst:false,scen:'base',mult:{},on:{},I:clone(M.INDIA_DEF)};
+  CH.forEach(function(p){s.mult[p.name]={cost:1,cyc:1};s.on[p.name]=true;});
+  return s;
+}
+function resetLevers(s){
+  s.shock=0;s.prog=1;s.gst=false;s.I=clone(M.INDIA_DEF);
+  CH.forEach(function(p){s.mult[p.name]={cost:1,cyc:1};});
+}
+var S=fresh();
+var SCEN=[
+ {id:'base',label:'Baseline',apply:function(s){}},
+ {id:'li',label:'Lithium price spike',apply:function(s){s.shock=150;}},
+ {id:'cheap',label:'Faster cost decline',apply:function(s){s.prog=0.85;}},
+ {id:'nashort',label:'Na-ion falls short',apply:function(s){s.mult['Na-ion']={cost:1.25,cyc:0.35};}},
+ {id:'ss',label:'Solid-state breakthrough',apply:function(s){s.mult['Solid-state (Li-metal/NMC)']={cost:0.65,cyc:1.6};}},
+ {id:'si',label:'Silicon anode stalls',apply:function(s){s.mult['Si-anode / HV-NMC']={cost:1.25,cyc:0.6};}},
+ {id:'inpush',label:'India localisation push',apply:function(s){s.region='India';s.I.dsMax=0.85;s.I.dvaYear=2029;s.I.prem26=0.15;s.I.pliFrac=1;s.I.pliEnd=2034;}},
+ {id:'innopli',label:'India without PLI',apply:function(s){s.region='India';s.I.pliFrac=0;s.I.prem35=0.2;}}
+];
+var syncers=[];
+var ctl=document.getElementById('controls');
+var pend=false;
+function schedule(){if(pend)return;pend=true;requestAnimationFrame(function(){pend=false;update();});}
+function custom(){S.scen=null;pressChips();}
+function group(title){var g=document.createElement('div');g.className='grp';g.innerHTML='<h3>'+title+'</h3>';ctl.appendChild(g);return g;}
+function slider(parent,id,label,min,max,step,get,set,fmt,tag,tagCls,keep){
+  var d=document.createElement('div');d.className='row';
+  d.innerHTML='<label for="'+id+'">'+label+(tag?'<em class="tag '+(tagCls||'')+'">'+tag+'</em>':'')+'</label><output for="'+id+'"></output><input type="range" id="'+id+'" min="'+min+'" max="'+max+'" step="'+step+'">';
+  var inp=d.querySelector('input'),out=d.querySelector('output');
+  function sync(){var v=get();inp.value=v;out.textContent=fmt(v);}
+  inp.addEventListener('input',function(){var v=parseFloat(inp.value);set(v);out.textContent=fmt(v);if(keep){pressChips();}else{custom();}schedule();});
+  syncers.push(sync);sync();parent.appendChild(d);return d;
+}
+function chipRow(parent,items,isOn,onClick){
+  var w=document.createElement('div');w.className='chips';
+  items.forEach(function(it){var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=it.label;b.dataset.id=it.id;
+    b.addEventListener('click',function(){onClick(it);syncAll();schedule();});w.appendChild(b);});
+  parent.appendChild(w);
+  var f=function(){[].forEach.call(w.children,function(b){b.setAttribute('aria-pressed',isOn(b.dataset.id)?'true':'false');});};
+  syncers.push(f);f();return f;
+}
+var pressChips=function(){syncAll();};
+function syncAll(){syncers.forEach(function(f){f();});var ib=document.getElementById('india-box');if(ib)ib.hidden=S.region!=='India';}
+
+// Region
+var g0=group('Region');
+var seg=document.createElement('div');seg.className='seg';
+['Global','India'].forEach(function(r){var b=document.createElement('button');b.type='button';b.textContent=r;b.addEventListener('click',function(){S.region=r;syncAll();schedule();});seg.appendChild(b);});
+g0.appendChild(seg);syncers.push(function(){[].forEach.call(seg.children,function(b){b.setAttribute('aria-pressed',b.textContent===S.region?'true':'false');});});
+
+// Scenario presets
+var g1=group('Market and policy scenario');
+chipRow(g1,SCEN,function(id){return S.scen===id;},function(it){var region=S.region;resetLevers(S);S.scen=it.id;it.apply(S);if(it.id==='base')S.region=region;});
+
+// Use case
+var g2=group('What matters most');
+chipRow(g2,Object.keys(M.WEIGHTS).map(function(k){return {id:k,label:k};}),function(id){return S.uc===id;},function(it){S.uc=it.id;S.w=clone(M.WEIGHTS[it.id]);});
+var wl=document.createElement('div');wl.className='stack';wl.style.marginTop='10px';g2.appendChild(wl);
+var WN={energy:'Energy density',cost:'Cost',life:'Cycle life',safety:'Safety',supply:'Supply security',maturity:'Maturity'};
+Object.keys(WN).forEach(function(k){
+  slider(wl,'w-'+k,WN[k],0,60,1,function(){return S.w[k];},function(v){S.w[k]=v;S.uc=null;},function(v){var t=0,kk;for(kk in S.w)t+=S.w[kk];return Math.round(100*v/(t||1))+'%';},null,null,true);
+});
+// the weight handler above clears the use case; keep chips in sync
+var origSync=syncers.slice();
+
+// Market levers
+var g3=group('Market levers');
+slider(g3,'shock','Lithium price change',-50,300,10,function(){return S.shock;},function(v){S.shock=v;},function(v){return (v>0?'+':'')+v+'%';});
+slider(g3,'prog','Cost decline by 2035 (all)',0.7,1.3,0.05,function(){return S.prog;},function(v){S.prog=v;},function(v){return v<1?Math.round((1-v)*100)+'% lower':v>1?Math.round((v-1)*100)+'% higher':'as modelled';});
+var fd=document.createElement('details');fd.className='sub-d';fd.style.marginTop='10px';
+fd.innerHTML='<summary>Fine-tune each chemistry</summary><div class="fine" id="fine"></div>';g3.appendChild(fd);
+var fine=fd.querySelector('#fine');
+CH.forEach(function(p,c){
+  var box=document.createElement('div');box.className='c';box.innerHTML='<b><span class="sw" style="background:'+col(c)+'"></span>'+esc(p.short)+'</b>';fine.appendChild(box);
+  slider(box,'mc'+c,'Pack cost',0.5,1.8,0.05,function(){return S.mult[p.name].cost;},function(v){S.mult[p.name].cost=v;},function(v){return '×'+v.toFixed(2);});
+  slider(box,'my'+c,'Cycle life',0.2,2,0.05,function(){return S.mult[p.name].cyc;},function(v){S.mult[p.name].cyc=v;},function(v){return '×'+v.toFixed(2);});
+});
+
+// India
+var ib=document.createElement('div');ib.id='india-box';ib.className='grp';ib.hidden=true;ib.innerHTML='<h3>India policy and supply</h3>';ctl.appendChild(ib);
+var il=document.createElement('div');il.className='stack';ib.appendChild(il);
+var pc=function(v){return Math.round(v*100)+'%';};
+slider(il,'i-ds','Domestic share of supply',0,1,0.05,function(){return S.I.dsMax;},function(v){S.I.dsMax=v;},pc);
+slider(il,'i-dva','Year domestic share peaks',2028,2035,1,function(){return S.I.dvaYear;},function(v){S.I.dvaYear=v;},function(v){return String(v);});
+slider(il,'i-delay','Localisation delay, new chemistries',0,5,1,function(){return S.I.delay;},function(v){S.I.delay=v;},function(v){return v+' yr';});
+slider(il,'i-p26','India-made cost premium, 2026',0,0.5,0.01,function(){return S.I.prem26;},function(v){S.I.prem26=v;},pc);
+slider(il,'i-p35','India-made cost premium, 2035',0,0.4,0.01,function(){return S.I.prem35;},function(v){S.I.prem35=v;},pc);
+slider(il,'i-pli','PLI subsidy paid, share of cap',0,1,0.05,function(){return S.I.pliFrac;},function(v){S.I.pliFrac=v;},pc);
+slider(il,'i-pliend','PLI ends after',2028,2035,1,function(){return S.I.pliEnd;},function(v){S.I.pliEnd=v;},function(v){return String(v);});
+slider(il,'i-bcd','Customs duty on imports',0,0.3,0.01,function(){return S.I.bcd;},function(v){S.I.bcd=v;},pc,'unverified');
+slider(il,'i-fr','Freight and insurance',0,0.1,0.01,function(){return S.I.freight;},function(v){S.I.freight=v;},pc,'assumed','ok');
+slider(il,'i-fx','Exchange rate, ₹ per $',80,100,1,function(){return S.I.fx;},function(v){S.I.fx=v;},function(v){return '₹'+v;},'assumed','ok');
+slider(il,'i-gst','GST rate',0,0.28,0.01,function(){return S.I.gst;},function(v){S.I.gst=v;},pc,'unverified');
+var gl=document.createElement('label');gl.style.cssText='display:flex;gap:8px;align-items:center;font-size:13px';gl.innerHTML='<input type="checkbox" id="i-gstshow"> Show cost with GST in the cost chart';
+il.appendChild(gl);var gcb=gl.querySelector('input');gcb.addEventListener('change',function(){S.gst=gcb.checked;custom();schedule();});
+syncers.push(function(){gcb.checked=S.gst;});
+
+// Chemistries
+var g4=group('Chemistries shown');
+var cl=document.createElement('div');cl.className='chem-list';g4.appendChild(cl);
+CH.forEach(function(p,c){
+  var l=document.createElement('label');l.innerHTML='<input type="checkbox" id="on'+c+'"><span class="sw" style="background:'+col(c)+'"></span>'+esc(p.name);
+  var cb=l.querySelector('input');
+  cb.addEventListener('change',function(){var cnt=0;CH.forEach(function(x){if(S.on[x.name])cnt++;});if(!cb.checked&&cnt<=2){cb.checked=true;return;}S.on[p.name]=cb.checked;schedule();});
+  syncers.push(function(){cb.checked=S.on[p.name];});cl.appendChild(l);
+});
+var note=document.createElement('p');note.style.cssText='margin:6px 0 0;font-size:12px;color:var(--ink2)';note.textContent='Scores are scaled across the chemistries shown, so hiding one can change the others’ rank.';g4.appendChild(note);
+
+var rb=document.createElement('button');rb.type='button';rb.className='btn';rb.textContent='Reset everything';
+rb.addEventListener('click',function(){S=fresh();syncAll();schedule();});ctl.appendChild(rb);
+
+// keep use-case chips honest when weights are edited
+syncAll();
+if(window.matchMedia('(max-width:920px)').matches)document.getElementById('panel').open=false;
+
+// ---- tooltip
+var tip=document.getElementById('tip');
+function showTip(html,x,y){tip.innerHTML=html;tip.style.opacity=1;var w=tip.offsetWidth,h=tip.offsetHeight,vx=window.innerWidth,vy=window.innerHeight;
+  var px=x+14;if(px+w>vx-8)px=x-w-14;if(px<8)px=8;var py=y+14;if(py+h>vy-8)py=y-h-14;if(py<8)py=8;tip.style.left=px+'px';tip.style.top=py+'px';}
+function hideTip(){tip.style.opacity=0;}
+document.addEventListener('scroll',hideTip,true);
+
+// ---- chart helpers
+function ticksLog(lo,hi){return [20,30,40,50,75,100,150,200,300,400,600,800,1000].filter(function(t){return t>=lo&&t<=hi;});}
+function niceStep(range,count){var raw=range/count,pow=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/pow;return (f<1.5?1:f<3?2:f<7?5:10)*pow;}
+function sw(c){return '<span class="sw" style="background:'+col(c)+'"></span>';}
+function legend(el,rows){el.innerHTML=rows.map(function(r){return '<span>'+sw(r.c)+esc(r.short)+'</span>';}).join('');}
+function fmtD(v){return '$'+Math.round(v);}
+
+var R=null,B=null;
+
+function rankChart(){
+  var el=document.getElementById('c-rank'),w=Math.max(280,el.clientWidth),narrow=w<520;
+  var rows=R.rows,rh=34,labW=narrow?92:150,right=narrow?96:170,top=6,bot=26,h=top+rows.length*rh+bot;
+  var len=w-labW-right,x=function(p){return labW+p*len;};
+  var s='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Share of simulations where each chemistry ranks first">';
+  [0,.25,.5,.75,1].forEach(function(t){s+='<line x1="'+x(t)+'" x2="'+x(t)+'" y1="'+top+'" y2="'+(h-bot)+'" stroke="var(--grid)" stroke-width="1"/>';
+    if(t===0||t===.5||t===1)s+='<text x="'+x(t)+'" y="'+(h-8)+'" text-anchor="middle">'+Math.round(t*100)+'%</text>';});
+  rows.forEach(function(r,i){
+    var y=top+i*rh+rh/2,l1=Math.max(r.p1*len,r.p1>0?2:0),l3=r.p3*len;
+    s+='<g data-i="'+i+'" class="hit"><rect x="0" y="'+(y-rh/2)+'" width="'+w+'" height="'+rh+'" fill="transparent"/>';
+    s+='<text class="lab" x="'+(labW-10)+'" y="'+(y+4)+'" text-anchor="end">'+esc(narrow?r.short:r.name.replace(' (graphite)','').replace(' (Li-metal/NMC)',''))+'</text>';
+    if(l3>l1)s+='<rect x="'+labW+'" y="'+(y-3)+'" width="'+l3+'" height="6" rx="3" fill="'+col(r.c)+'" opacity=".28"/>';
+    if(l1>0)s+='<path d="M'+labW+' '+(y-8)+'h'+Math.max(l1-4,0)+'a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-'+Math.max(l1-4,0)+'z" fill="'+col(r.c)+'"/>';
+    var lx=labW+Math.max(l1,l3)+8;
+    s+='<text class="lab" x="'+lx+'" y="'+(y+4)+'"><tspan font-weight="600">'+Math.round(r.p1*100)+'%</tspan><tspan dx="8" fill="var(--ink2)" style="fill:var(--ink2)">'+(narrow?'':'top three ')+Math.round(r.p3*100)+'%</tspan></text></g>';
+  });
+  s+='<line x1="'+labW+'" x2="'+labW+'" y1="'+top+'" y2="'+(h-bot)+'" stroke="var(--axis)"/></svg>';
+  el.innerHTML=s;
+  [].forEach.call(el.querySelectorAll('.hit'),function(g){
+    var r=rows[+g.dataset.i];
+    function f(e){showTip('<b>'+sw(r.c)+esc(r.name)+'</b><br>First place: '+Math.round(r.p1*100)+'%<br>Top three: '+Math.round(r.p3*100)+'%<br>Median rank: '+r.medRank+' of '+rows.length+'<br>Score: '+r.score.p50.toFixed(2)+' ('+r.score.p10.toFixed(2)+' to '+r.score.p90.toFixed(2)+')',e.clientX,e.clientY);}
+    g.addEventListener('pointermove',f);g.addEventListener('pointerdown',f);g.addEventListener('pointerleave',hideTip);
+  });
+}
+
+function costChart(){
+  var el=document.getElementById('c-cost'),w=Math.max(280,el.clientWidth),narrow=w<520;
+  var rows=R.rows,h=narrow?300:340,m={l:42,r:narrow?66:92,t:10,b:26},pw=w-m.l-m.r,ph=h-m.t-m.b;
+  var vals=[];rows.forEach(function(r){r.path.forEach(function(v){vals.push(v);});});vals.push(75);
+  var lo=Math.min.apply(null,vals)*0.9,hi=Math.max.apply(null,vals)*1.1;
+  var ll=Math.log(lo),lh=Math.log(hi),X=function(i){return m.l+pw*i/9;},Y=function(v){return m.t+ph*(1-(Math.log(v)-ll)/(lh-ll));};
+  var s='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Projected pack cost by chemistry, 2026 to 2035">';
+  ticksLog(lo,hi).forEach(function(t){s+='<line x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" stroke="var(--grid)"/><text x="'+(m.l-6)+'" y="'+(Y(t)+4)+'" text-anchor="end">$'+t+'</text>';});
+  [0,3,6,9].forEach(function(i){s+='<text x="'+X(i)+'" y="'+(h-8)+'" text-anchor="middle">'+YEARS[i]+'</text>';});
+  s+='<line x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+Y(75)+'" y2="'+Y(75)+'" stroke="var(--ink2)" stroke-dasharray="4 4"/><text x="'+(m.l+4)+'" y="'+(Y(75)-5)+'">DOE $75 goal</text>';
+  rows.forEach(function(r){s+='<polyline fill="none" stroke="'+col(r.c)+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="'+r.path.map(function(v,i){return X(i).toFixed(1)+','+Y(v).toFixed(1);}).join(' ')+'"/>';});
+  var ends=rows.map(function(r){return {r:r,y:Y(r.path[9])};}).sort(function(a,b){return a.y-b.y;});
+  for(var i=1;i<ends.length;i++){if(ends[i].y-ends[i-1].y<13)ends[i].y=ends[i-1].y+13;}
+  ends.forEach(function(e){s+='<text class="lab" x="'+(w-m.r+6)+'" y="'+(e.y+4)+'">'+esc(e.r.short)+'</text>';});
+  s+='<g id="xh" style="display:none"><line id="xhl" y1="'+m.t+'" y2="'+(h-m.b)+'" stroke="var(--ink2)"/></g>';
+  s+='<rect id="xho" x="'+m.l+'" y="'+m.t+'" width="'+pw+'" height="'+ph+'" fill="transparent"/></svg>';
+  el.innerHTML=s;
+  var ov=el.querySelector('#xho'),g=el.querySelector('#xh'),ln=el.querySelector('#xhl');
+  function mv(e){var b=ov.getBoundingClientRect(),i=Math.round((e.clientX-b.left)/b.width*9);i=Math.max(0,Math.min(9,i));
+    g.style.display='';ln.setAttribute('x1',X(i));ln.setAttribute('x2',X(i));
+    var list=rows.slice().sort(function(a,b){return a.path[i]-b.path[i];});
+    showTip('<b>'+YEARS[i]+'</b>'+list.map(function(r){return '<br>'+sw(r.c)+esc(r.short)+' '+fmtD(r.path[i]);}).join(''),e.clientX,e.clientY);}
+  ov.addEventListener('pointermove',mv);ov.addEventListener('pointerdown',mv);ov.addEventListener('pointerleave',function(){g.style.display='none';hideTip();});
+}
+
+function scatter(){
+  var el=document.getElementById('c-sc'),w=Math.max(280,el.clientWidth),narrow=w<520,rows=R.rows;
+  var h=narrow?300:340,m={l:46,r:14,t:12,b:40},pw=w-m.l-m.r,ph=h-m.t-m.b;
+  var xmin=Math.min.apply(null,rows.map(function(r){return r.wh;}))-30,xmax=Math.max.apply(null,rows.map(function(r){return r.wh;}))+40;
+  var ymin=Math.min.apply(null,rows.map(function(r){return r.cost.p10;}))*0.9,ymax=Math.max.apply(null,rows.map(function(r){return r.cost.p90;}))*1.08;
+  var xs=niceStep(xmax-xmin,5),ys=niceStep(ymax-ymin,5);xmin=Math.floor(xmin/xs)*xs;xmax=Math.ceil(xmax/xs)*xs;ymin=Math.max(0,Math.floor(ymin/ys)*ys);ymax=Math.ceil(ymax/ys)*ys;
+  var X=function(v){return m.l+pw*(v-xmin)/(xmax-xmin);},Y=function(v){return m.t+ph*(1-(v-ymin)/(ymax-ymin));};
+  var s='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Energy density against 2035 pack cost">';
+  for(var t=ymin;t<=ymax+1e-6;t+=ys)s+='<line x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" stroke="var(--grid)"/><text x="'+(m.l-6)+'" y="'+(Y(t)+4)+'" text-anchor="end">$'+Math.round(t)+'</text>';
+  for(var t2=xmin;t2<=xmax+1e-6;t2+=xs)s+='<text x="'+X(t2)+'" y="'+(h-22)+'" text-anchor="middle">'+Math.round(t2)+'</text>';
+  s+='<text x="'+(m.l+pw/2)+'" y="'+(h-4)+'" text-anchor="middle">Cell energy density, Wh/kg</text>';
+  s+='<line x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+(h-m.b)+'" y2="'+(h-m.b)+'" stroke="var(--axis)"/>';
+  var placed=[];
+  rows.forEach(function(r,i){
+    var cx=X(r.wh),cy=Y(r.cost.p50);
+    s+='<g class="hit" data-i="'+i+'"><line x1="'+cx+'" x2="'+cx+'" y1="'+Y(r.cost.p10)+'" y2="'+Y(r.cost.p90)+'" stroke="'+col(r.c)+'" stroke-width="2" stroke-linecap="round"/>';
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="6" fill="'+col(r.c)+'" stroke="var(--surface)" stroke-width="2"/><circle cx="'+cx+'" cy="'+cy+'" r="16" fill="transparent"/></g>';
+    var tw=r.short.length*6.4,side=1;
+    if(cx+10+tw>w-4)side=-1;
+    var ty=cy+4,tries=0;
+    while(tries<6&&placed.some(function(p){return Math.abs(p.y-ty)<13&&Math.abs(p.x-(cx+side*(10+tw/2)))<(tw+p.w)/2+4;})){ty+=(tries%2?-1:1)*13*(Math.floor(tries/2)+1);tries++;}
+    var tx=side===1?cx+10:cx-10;placed.push({x:cx+side*(10+tw/2),y:ty,w:tw});
+    s+='<text class="lab" x="'+tx+'" y="'+ty+'" text-anchor="'+(side===1?'start':'end')+'">'+esc(r.short)+'</text>';
+  });
+  s+='</svg>';el.innerHTML=s;
+  [].forEach.call(el.querySelectorAll('.hit'),function(g){var r=rows[+g.dataset.i];
+    function f(e){showTip('<b>'+sw(r.c)+esc(r.name)+'</b><br>'+Math.round(r.wh)+' Wh/kg<br>2035 pack cost '+fmtD(r.cost.p50)+' ('+fmtD(r.cost.p10)+' to '+fmtD(r.cost.p90)+')<br>'+Math.round(r.cyc).toLocaleString()+' cycles',e.clientX,e.clientY);}
+    g.addEventListener('pointermove',f);g.addEventListener('pointerdown',f);g.addEventListener('pointerleave',hideTip);});
+}
+
+function lcosChart(){
+  var el=document.getElementById('c-lcos'),w=Math.max(280,el.clientWidth),narrow=w<520;
+  var rows=R.rows.slice().sort(function(a,b){return a.lcos-b.lcos;}),rh=30,labW=narrow?92:150,right=narrow?56:70,top=6,bot=26,h=top+rows.length*rh+bot;
+  var mx=Math.max.apply(null,rows.map(function(r){return r.lcos;}))*1.05,len=w-labW-right,x=function(v){return labW+len*v/mx;};
+  var s='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Cost per kWh delivered over the pack life">';
+  var st=niceStep(mx,4);
+  for(var t=0;t<=mx;t+=st){s+='<line x1="'+x(t)+'" x2="'+x(t)+'" y1="'+top+'" y2="'+(h-bot)+'" stroke="var(--grid)"/><text x="'+x(t)+'" y="'+(h-8)+'" text-anchor="middle">'+(+t.toFixed(1))+'¢</text>';}
+  rows.forEach(function(r,i){var y=top+i*rh+rh/2,l=Math.max(x(r.lcos)-labW,2);
+    s+='<g class="hit" data-i="'+i+'"><rect x="0" y="'+(y-rh/2)+'" width="'+w+'" height="'+rh+'" fill="transparent"/><text class="lab" x="'+(labW-10)+'" y="'+(y+4)+'" text-anchor="end">'+esc(narrow?r.short:r.name.replace(' (graphite)','').replace(' (Li-metal/NMC)',''))+'</text>';
+    s+='<path d="M'+labW+' '+(y-7)+'h'+Math.max(l-4,0)+'a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4h-'+Math.max(l-4,0)+'z" fill="'+col(r.c)+'"/><text class="lab" x="'+(labW+l+8)+'" y="'+(y+4)+'">'+r.lcos.toFixed(1)+'¢</text></g>';});
+  s+='<line x1="'+labW+'" x2="'+labW+'" y1="'+top+'" y2="'+(h-bot)+'" stroke="var(--axis)"/></svg>';el.innerHTML=s;
+  [].forEach.call(el.querySelectorAll('.hit'),function(g){var r=rows[+g.dataset.i];
+    function f(e){showTip('<b>'+sw(r.c)+esc(r.name)+'</b><br>'+r.lcos.toFixed(2)+' cents per kWh delivered<br>'+fmtD(r.cost.p50)+'/kWh pack, '+Math.round(r.cyc).toLocaleString()+' cycles',e.clientX,e.clientY);}
+    g.addEventListener('pointermove',f);g.addEventListener('pointerdown',f);g.addEventListener('pointerleave',hideTip);});
+}
+
+function table(){
+  var bmap={};B.rows.forEach(function(r){bmap[r.name]=r;});
+  var h='<table><thead><tr><th>Chemistry</th><th>First place</th><th>Change</th><th>Top three</th><th>Median rank</th><th>Score (10–90%)</th><th>2035 pack $/kWh (10–90%)</th><th>Wh/kg</th><th>Cycles</th><th>¢/kWh delivered</th><th>TRL</th></tr></thead><tbody>';
+  R.rows.forEach(function(r){
+    var b=bmap[r.name],d=b?(r.p1-b.p1)*100:0,dc=Math.abs(d)<0.5?'':(d>0?'up':'down'),dt=Math.abs(d)<0.5?'–':(d>0?'▲ +':'▼ −')+Math.abs(d).toFixed(0)+' pts';
+    h+='<tr><td>'+sw(r.c)+esc(r.name)+'</td><td>'+Math.round(r.p1*100)+'%</td><td class="'+dc+'">'+dt+'</td><td>'+Math.round(r.p3*100)+'%</td><td>'+r.medRank+'</td><td>'+r.score.p50.toFixed(2)+' ('+r.score.p10.toFixed(2)+'–'+r.score.p90.toFixed(2)+')</td><td>'+Math.round(r.cost.p50)+' ('+Math.round(r.cost.p10)+'–'+Math.round(r.cost.p90)+')</td><td>'+Math.round(r.wh)+'</td><td>'+Math.round(r.cyc).toLocaleString()+'</td><td>'+r.lcos.toFixed(1)+'</td><td>'+r.trl+'</td></tr>';});
+  document.getElementById('tbl').innerHTML=h+'</tbody></table>';
+  var y='<table><thead><tr><th>Chemistry</th>'+YEARS.map(function(v){return '<th>'+v+'</th>';}).join('')+'</tr></thead><tbody>';
+  R.rows.forEach(function(r){y+='<tr><td>'+sw(r.c)+esc(r.short)+'</td>'+r.path.map(function(v){return '<td>'+Math.round(v)+'</td>';}).join('')+'</tr>';});
+  document.getElementById('tbl-years').innerHTML=y+'</tbody></table>';
+}
+
+function headline(){
+  var a=R.rows[0],b=R.rows[1],ba=B.rows[0];
+  var ucName=S.uc||'your weighting',reg=S.region==='India'?' in India':'';
+  var t='<b>'+esc(a.name.replace(' (graphite)','').replace(' (Li-metal/NMC)',''))+'</b> comes out on top in '+Math.round(a.p1*100)+'% of outcomes for '+esc(ucName.toLowerCase())+reg+'. '+esc(b.short)+' is next at '+Math.round(b.p1*100)+'%.';
+  var sm='';
+  if(ba.name!==a.name)sm='With baseline levers the leader would be '+esc(ba.short)+' ('+Math.round(ba.p1*100)+'%).';
+  else if(S.scen!=='base'&&Math.abs(a.p1-ba.p1)>=.005)sm='Baseline levers give '+esc(ba.short)+' '+Math.round(ba.p1*100)+'% here.';
+  var cheap=R.rows.slice().sort(function(x,y){return x.cost.p50-y.cost.p50;})[0],dense=R.rows.slice().sort(function(x,y){return y.wh-x.wh;})[0];
+  sm+=(sm?' ':'')+'Cheapest 2035 pack: '+esc(cheap.short)+' at '+fmtD(cheap.cost.p50)+'/kWh. Most energy-dense: '+esc(dense.short)+' at '+Math.round(dense.wh)+' Wh/kg.';
+  document.getElementById('headline').innerHTML=t+'<small>'+sm+'</small>';
+}
+
+function update(){
+  R=M.compute(S);
+  var bs=clone(S);resetLevers(bs);bs.region=S.region;bs.on=S.on;B=M.compute(bs);
+  headline();rankChart();costChart();scatter();lcosChart();table();
+  var ind=S.region==='India';
+  document.getElementById('cost-title').textContent=ind?'India delivered pack cost, 2026 to 2035':'Global pack cost, 2026 to 2035';
+  document.getElementById('cost-desc').textContent=ind?'Blend of imported and domestic supply, after PLI subsidy'+(S.gst?', with GST':', before GST')+'. Hover for yearly values.':'Median path per chemistry, log scale. Hover for yearly values.';
+  legend(document.getElementById('lg-cost'),R.rows);legend(document.getElementById('lg-sc'),R.rows);
+  syncAll();
+}
+var ro=new ResizeObserver(function(){if(R){rankChart();costChart();scatter();lcosChart();}});
+ro.observe(document.getElementById('content'));
+update();
+})();
+</script>

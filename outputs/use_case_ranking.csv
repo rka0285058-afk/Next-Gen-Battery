@@ -1,0 +1,36 @@
+use_case,chemistry,mean_score,prob_rank1,prob_top3,median_rank
+Grid storage,Na-ion,0.902,0.921,1.0,1
+Grid storage,LFP,0.824,0.062,1.0,2
+Grid storage,LMFP,0.792,0.017,0.996,3
+Grid storage,Si-anode / HV-NMC,0.655,0.0,0.004,4
+Grid storage,NMC (graphite),0.627,0.0,0.0,5
+Grid storage,Solid-state (Li-metal/NMC),0.421,0.0,0.0,6
+Grid storage,Li-S,0.337,0.0,0.0,7
+Grid storage (India),Na-ion,0.903,0.929,1.0,1
+Grid storage (India),LFP,0.826,0.058,1.0,2
+Grid storage (India),LMFP,0.793,0.013,0.997,3
+Grid storage (India),Si-anode / HV-NMC,0.655,0.0,0.003,4
+Grid storage (India),NMC (graphite),0.628,0.0,0.0,5
+Grid storage (India),Solid-state (Li-metal/NMC),0.42,0.0,0.0,6
+Grid storage (India),Li-S,0.335,0.0,0.0,7
+Long-range EV,Si-anode / HV-NMC,0.646,0.512,0.903,1
+Long-range EV,Na-ion,0.621,0.183,0.746,2
+Long-range EV,LFP,0.603,0.026,0.494,4
+Long-range EV,LMFP,0.578,0.005,0.14,5
+Long-range EV,Solid-state (Li-metal/NMC),0.567,0.121,0.299,6
+Long-range EV,Li-S,0.563,0.151,0.299,6
+Long-range EV,NMC (graphite),0.561,0.002,0.119,6
+Low-cost mobility,Na-ion,0.822,0.894,0.996,1
+Low-cost mobility,LFP,0.741,0.071,0.984,2
+Low-cost mobility,LMFP,0.716,0.032,0.885,3
+Low-cost mobility,Si-anode / HV-NMC,0.651,0.001,0.087,4
+Low-cost mobility,NMC (graphite),0.576,0.0,0.002,5
+Low-cost mobility,Solid-state (Li-metal/NMC),0.448,0.001,0.014,6
+Low-cost mobility,Li-S,0.422,0.001,0.032,7
+Low-cost mobility (India),Na-ion,0.823,0.903,0.997,1
+Low-cost mobility (India),LFP,0.742,0.067,0.988,2
+Low-cost mobility (India),LMFP,0.717,0.029,0.899,3
+Low-cost mobility (India),Si-anode / HV-NMC,0.651,0.001,0.079,4
+Low-cost mobility (India),NMC (graphite),0.577,0.0,0.002,5
+Low-cost mobility (India),Solid-state (Li-metal/NMC),0.447,0.0,0.009,6
+Low-cost mobility (India),Li-S,0.42,0.0,0.026,7

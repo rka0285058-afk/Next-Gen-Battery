@@ -1,0 +1,8 @@
+chemistry,cell_wh_per_kg_p50,cost_2026_p50,cost_2035_p10,cost_2035_p50,cost_2035_p90,india_2035_vs_global,cycles_p50,lcos_2035_global_p50,lcos_2035_india_p50,trl,data_basis
+NMC (graphite),250,126,88,98,110,1.081,1501,0.079,0.086,9,"[DERIVED] cost26 from BatPaC; [DOE] cost35, cycles; [ASSUMED] wh_kg, safety, supply"
+LFP,175,103,75,80,85,1.073,4491,0.022,0.023,9,"[BatPaC] cost; [IEA] supply; [ASSUMED] wh_kg, cycles, safety"
+LMFP,187,109,71,79,88,1.075,3114,0.031,0.033,7,"[MFR] wh_kg (BYD Blade 2.0, press); [ASSUMED] rest"
+Si-anode / HV-NMC,317,118,76,81,89,1.079,902,0.109,0.118,7,"[BatPaC] cost; [DOE] wh_kg, cycles; [ASSUMED] safety, supply"
+Na-ion,156,97,50,63,78,1.067,5129,0.015,0.016,7,"[MFR] wh_kg, cycles; [DERIVED] cost; [IEA] supply"
+Solid-state (Li-metal/NMC),378,425,92,122,155,1.09,703,0.213,0.232,5,"[MFR]+[DOE] wh_kg, cycles; [IEA] maturity; [ASSUMED] cost26"
+Li-S,400,474,77,113,161,1.09,381,0.359,0.392,4,"[DOE] wh_kg, cost35, cycles; [ASSUMED] cost26 - no usable current spec found (Lyten page gave none)"

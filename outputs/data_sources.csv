@@ -1,0 +1,20 @@
+item,detail
+NMC (graphite),"[DERIVED] cost26 from BatPaC; [DOE] cost35, cycles; [ASSUMED] wh_kg, safety, supply"
+LFP,"[BatPaC] cost; [IEA] supply; [ASSUMED] wh_kg, cycles, safety"
+LMFP,"[MFR] wh_kg (BYD Blade 2.0, press); [ASSUMED] rest"
+Si-anode / HV-NMC,"[BatPaC] cost; [DOE] wh_kg, cycles; [ASSUMED] safety, supply"
+Na-ion,"[MFR] wh_kg, cycles; [DERIVED] cost; [IEA] supply"
+Solid-state (Li-metal/NMC),"[MFR]+[DOE] wh_kg, cycles; [IEA] maturity; [ASSUMED] cost26"
+Li-S,"[DOE] wh_kg, cost35, cycles; [ASSUMED] cost26 - no usable current spec found (Lyten page gave none)"
+India.fx_inr_per_usd,88.0
+India.freight_insurance,0.04
+India.bcd_on_imports,0.05
+India.gst_on_batteries,0.18
+India.domestic_cost_premium_2026,0.25
+India.domestic_cost_premium_2035,0.08
+India.dva_target_year,2031
+India.domestic_share_max,0.6
+India.pli_cap_pct_of_price,0.2
+India.pli_cap_inr_per_kwh,2000.0
+India.pli_last_year,2032
+India.pli_effective_fraction,0.5
